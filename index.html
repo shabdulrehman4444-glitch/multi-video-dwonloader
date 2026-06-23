@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Platform Video Downloader</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        #status { margin-top: 15px; font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Universal Video Downloader</h2>
+    <p>Paste YT, Insta, FB, TikTok, or Snap links below</p>
+    
+    <input type="text" id="videoUrl" placeholder="Yahan link paste karein..." required>
+    
+    <select id="quality">
+        <option value="hd">Full HD (Video + Voice)</option>
+        <option value="low">Low Quality (Video + Voice)</option>
+        <option value="mp3">Audio Only (MP3)</option>
+    </select>
+    
+    <button onclick="startDownload()">Download Now</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    async function startDownload() {
+        const videoUrl = document.getElementById('videoUrl').value;
+        const quality = document.getElementById('quality').value;
+        const statusDiv = document.getElementById('status');
+
+        if(!videoUrl) {
+            statusDiv.innerText = "Pehle link tu dalo jaani!";
+            return;
+        }
+
+        statusDiv.innerText = "Processing... Video download ho rhi hai, thora sabar karein.";
+
+        try {
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoUrl, quality })
+            });
+
+            if (!response.ok) throw new Error('Download failed server side');
+
+            // File blob received
+            const blob = await response.blob();
+            
+            // Extract filename from content-disposition header if available
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = "Downloaded_Video.mp4";
+            if (contentDisposition && contentDisposition.includes('filename=')) {
+                filename = contentDisposition.split('filename=')[1].replaceAll('"', '');
+            }
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            
+            statusDiv.innerText = "Mubarak ho! Download complete.";
+        } catch (error) {
+            statusDiv.innerText = "Oops! Koi error aya hai. Link check karein.";
+            console.error(error);
+        }
+    }
+</script>
+</body>
+</html>
